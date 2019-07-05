@@ -19,6 +19,28 @@ void dmpDataReady() {
     mpuInterrupt = true;
 }
 
+//Smoothed acceleration x (test)
+
+const int SMOOTH_LENGTH = 3;
+int16_t accelStore[SMOOTH_LENGTH];
+
+void updateAccelStore(int16_t newInt){
+  for(int i=SMOOTH_LENGTH-2;i>=0;i--){
+    accelStore[i+1] = accelStore[i];
+  }  
+  accelStore[0] = newInt;
+}
+int16_t getSmoothedAccel(){
+  int16_t sum = 0;
+  for(int i=0;i<SMOOTH_LENGTH;i++){
+    sum += accelStore[i];  
+  }
+  return sum/SMOOTH_LENGTH;
+}
+
+long prevMillis = 0;
+int16_t vx = 0;
+
 //Radio
 
 Comms comms(9, 8, "00001");
@@ -58,7 +80,7 @@ void setup_mpu(){
 }
 
 void update_mpu(){
-
+  
   if (!mpuData.dmpReady) return;
   
   while (!mpuInterrupt && mpuData.fifoCount < mpuData.packetSize) {
@@ -72,7 +94,7 @@ void update_mpu(){
   
   // get current FIFO count
   mpuData.fifoCount = mpu.getFIFOCount();
-  
+
   if ((mpuData.mpuIntStatus & _BV(MPU6050_INTERRUPT_FIFO_OFLOW_BIT)) || mpuData.fifoCount >= 1024) {
       // reset so we can continue cleanly
       mpu.resetFIFO();
@@ -81,39 +103,40 @@ void update_mpu(){
   
   // otherwise, check for DMP data ready interrupt (this should happen frequently)
   } else if (mpuData.mpuIntStatus & _BV(MPU6050_INTERRUPT_DMP_INT_BIT)) {
+
       // wait for correct available data length, should be a VERY short wait
       while (mpuData.fifoCount < mpuData.packetSize) mpuData.fifoCount = mpu.getFIFOCount();
   
       // read a packet from FIFO
       mpu.getFIFOBytes(mpuData.fifoBuffer, mpuData.packetSize);
       mpu.resetFIFO();
+
       
       // track FIFO count here in case there is > 1 packet available
       // (this lets us immediately read more without waiting for an interrupt)
       mpuData.fifoCount -= mpuData.packetSize;
 
       //Extract relevant information
-      
-      // display Euler angles in degrees
-      mpu.dmpGetQuaternion(&mpuData.q, mpuData.fifoBuffer);
-      mpu.dmpGetGravity(&mpuData.gravity, &mpuData.q);
-      mpu.dmpGetYawPitchRoll(mpuData.ypr, &mpuData.q, &mpuData.gravity);
-      /*
-      Serial.print("ypr\t");
-      Serial.print(mpuData.ypr[0] * 180/M_PI);
-      Serial.print("\t");
-      Serial.print(mpuData.ypr[1] * 180/M_PI);
-      Serial.print("\t");
-      Serial.println(mpuData.ypr[2] * 180/M_PI);
-      */
 
       // display real acceleration, adjusted to remove gravity
       mpu.dmpGetQuaternion(&mpuData.q, mpuData.fifoBuffer);
       mpu.dmpGetAccel(&mpuData.aa, mpuData.fifoBuffer);
       mpu.dmpGetGravity(&mpuData.gravity, &mpuData.q);
+      mpu.dmpGetYawPitchRoll(mpuData.ypr, &mpuData.q, &mpuData.gravity);
       mpu.dmpGetLinearAccel(&mpuData.aaReal, &mpuData.aa, &mpuData.gravity);
+      mpu.dmpGetLinearAccelInWorld(&mpuData.aaWorld, &mpuData.aaReal, &mpuData.q);
+       
+      updateAccelStore(mpuData.aaWorld.x);
 
-      Serial.println(mpuData.aaReal.y);
+      //Serial.println(getSmoothedAccel());
+      //Serial.println(mpuData.aaWorld.x);
+
+      long elapsedMillis = prevMillis - millis();
+      prevMillis = millis();
+
+      vx += ( getSmoothedAccel() * elapsedMillis ) / 1000;
+      
+      Serial.println(vx);
 
   }  
 }
