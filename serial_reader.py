@@ -1,21 +1,18 @@
 
 import serial
-import numpy as np
 
-ser = serial.Serial("COM3",9600)
+try:
+    ser = serial.Serial("COM3",9600)
+except:
+    pass
 
 def read_serial():
     return ser.readline()
 
-def send_serial(text):
-    ser.write(bytes(text)) #Need to check if this works
-
-latest = np.zeros(10)
-
 n=0
-max_n = 10
+max_n = 10;
 while n<max_n:
-    print(read_serial())
+    print(ser.readline().decode("utf-8"));
     n+=1
-        
+    
 ser.close()

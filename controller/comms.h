@@ -11,8 +11,9 @@ public:
   Comms(int CE, int CSN, const byte* pipe_address):radio(CE, CSN),
     pipe_address(pipe_address){}
   void init();
-  void sendString(const char* data, int length);
+  void sendString(const char* data, int16_t length);
   void sendInt(const int16_t data);
+  void sendInts(const int16_t* start, int16_t length);
   
 private:
   RF24 radio;

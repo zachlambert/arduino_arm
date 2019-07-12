@@ -7,6 +7,8 @@
 
 #include "comms.h"
 #include "mpuData.h"
+#include "motion.h"
+#include "buttons.h"
 
 //MPU
 
@@ -19,31 +21,17 @@ void dmpDataReady() {
     mpuInterrupt = true;
 }
 
-//Smoothed acceleration x (test)
+//Motion tracking
 
-const int SMOOTH_LENGTH = 3;
-int16_t accelStore[SMOOTH_LENGTH];
+Motion motion;
 
-void updateAccelStore(int16_t newInt){
-  for(int i=SMOOTH_LENGTH-2;i>=0;i--){
-    accelStore[i+1] = accelStore[i];
-  }  
-  accelStore[0] = newInt;
-}
-int16_t getSmoothedAccel(){
-  int16_t sum = 0;
-  for(int i=0;i<SMOOTH_LENGTH;i++){
-    sum += accelStore[i];  
-  }
-  return sum/SMOOTH_LENGTH;
-}
-
-long prevMillis = 0;
-int16_t vx = 0;
-
-//Radio
+//Communication
 
 Comms comms(9, 8, "00001");
+
+//Buttons
+
+Buttons buttons(4,5,6);
 
 void setup_mpu(){
 
@@ -125,19 +113,6 @@ void update_mpu(){
       mpu.dmpGetYawPitchRoll(mpuData.ypr, &mpuData.q, &mpuData.gravity);
       mpu.dmpGetLinearAccel(&mpuData.aaReal, &mpuData.aa, &mpuData.gravity);
       mpu.dmpGetLinearAccelInWorld(&mpuData.aaWorld, &mpuData.aaReal, &mpuData.q);
-       
-      updateAccelStore(mpuData.aaWorld.x);
-
-      //Serial.println(getSmoothedAccel());
-      //Serial.println(mpuData.aaWorld.x);
-
-      long elapsedMillis = prevMillis - millis();
-      prevMillis = millis();
-
-      vx += ( getSmoothedAccel() * elapsedMillis ) / 1000;
-      
-      Serial.println(vx);
-
   }  
 }
 
@@ -147,7 +122,8 @@ void setup() {
 
   setup_mpu();
   comms.init();
-
+  buttons.init();
+  
 }
 
 void loop() {
@@ -155,11 +131,49 @@ void loop() {
   //Read from MPU
 
   update_mpu();
+
+  //Update buttons
+  buttons.update();
+    
+  //Update motion tracking
+  
+  motion.updateAcceleration(
+    mpuData.aaWorld.x,mpuData.aaWorld.y,mpuData.aaWorld.z);
+
+  if(buttons.moveButtonJustDown()){
+    motion.resetVelocity();
+    Serial.println("RESETTING VELOCITY");
+  }
+  motion.updateVelocity();
   
   //Write to radio
-
+  
   //const char my_string[] = "Hello World v2!";
   //comms.sendString(my_string,sizeof(my_string));
 
-  //comms.sendInt(-37);
+  //comms.sendInt(motion.getVelocityX());
+
+  int16_t closeStatus = (int16_t)buttons.closeButtonDown();
+  int16_t openStatus = (int16_t)buttons.openButtonDown();  
+  
+  int16_t data[5] = {0, 0, 0, closeStatus, openStatus};
+
+  if(buttons.moveButtonDown()){
+    data[0] = motion.getVelocityX();
+    data[1] = motion.getVelocityY();
+    data[2] = motion.getVelocityZ();  
+  }
+
+  Serial.print(motion.getVelocityX());
+  Serial.print(" | ");
+  Serial.print(motion.getVelocityY());
+  Serial.print(" | ");
+  Serial.print(motion.getVelocityZ());
+  Serial.print(" | ");
+  Serial.print(closeStatus);
+  Serial.print(" | ");
+  Serial.print(openStatus);
+  Serial.println("");
+  
+  comms.sendInts(data, 5);
 }
