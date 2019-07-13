@@ -1,14 +1,11 @@
 //Include Libraries
-#include <SPI.h>
-#include <nRF24L01.h>
-#include <RF24.h>
+
+#include "comms.h"
 #include <Servo.h>
 
-//create an RF24 object
-RF24 radio(8, 7);  // CE, CSN
+//Communication
 
-//address through which two modules communicate.
-const byte address[6] = "00001";
+Comms comms(8, 7, "00001");
 
 //Servos
 
@@ -17,27 +14,18 @@ const byte address[6] = "00001";
 #define SERVO_2_PIN 6 //Medium range of motion pivot
 #define SERVO_1_PIN 5 //Largest range of motion pivot
 
-/*
 Servo servo4;
 Servo servo3;
 Servo servo2;
 Servo servo1;
-*/
 
 void setup(){
   
   while (!Serial);
     Serial.begin(9600);
   
-  radio.begin();
-  
-  //set the address
-  radio.openReadingPipe(0, address);
-  radio.setPALevel(RF24_PA_MIN);
-  //Set module as receiver
-  radio.startListening();
+  comms.init();
 
-  /*
   servo4.attach(SERVO_4_PIN);
   servo3.attach(SERVO_3_PIN);
   servo2.attach(SERVO_2_PIN);
@@ -46,15 +34,14 @@ void setup(){
   servo4.write(90);
   servo3.write(90);
   servo2.write(90);
-  servo1.write(70);
-  */
+  servo1.write(90);
 }
 
 void loop(){
   //Read the data if available in buffer
-  if (radio.available()){
+  if (comms.available()){
     int16_t data[5] = {0,0,0,0,0};
-    radio.read(data, 2*5);
+    comms.readInts(data, 5);
     Serial.print(data[0]);
     Serial.print(" | ");
     Serial.print(data[1]);

@@ -112,7 +112,7 @@ void update_mpu(){
       mpu.dmpGetGravity(&mpuData.gravity, &mpuData.q);
       mpu.dmpGetYawPitchRoll(mpuData.ypr, &mpuData.q, &mpuData.gravity);
       mpu.dmpGetLinearAccel(&mpuData.aaReal, &mpuData.aa, &mpuData.gravity);
-      mpu.dmpGetLinearAccelInWorld(&mpuData.aaWorld, &mpuData.aaReal, &mpuData.q);
+      //mpu.dmpGetLinearAccelInWorld(&mpuData.aaWorld, &mpuData.aaReal, &mpuData.q);
   }  
 }
 
@@ -138,7 +138,7 @@ void loop() {
   //Update motion tracking
   
   motion.updateAcceleration(
-    mpuData.aaWorld.x,mpuData.aaWorld.y,mpuData.aaWorld.z);
+    mpuData.aaReal.x,mpuData.aaReal.y,mpuData.aaReal.z);
 
   if(buttons.moveButtonJustDown()){
     motion.resetVelocity();
