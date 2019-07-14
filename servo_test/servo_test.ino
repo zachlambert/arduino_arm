@@ -28,6 +28,13 @@ void setup() {
   buttonValue = digitalRead(4);
   
   Serial.begin(9600);
+
+  /*
+  servos[0].write(87);
+  servos[1].write(60);
+  servos[2].write(90);
+  while(1){}
+  */
 }
 
 void loop() {
