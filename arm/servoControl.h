@@ -3,55 +3,64 @@
 
 #include <Servo.h>
 #include <Arduino.h>
+#include "geometry.h"
 
 class SmartServo{
-
+  
 public:
-  SmartServo(const int PIN, const int HOME, const int MIN, const int MAX):
-    servo(), PIN(PIN), speed(0), pos(90),
-    HOME(HOME), MIN(MIN), MAX(MAX), prevMillis(0){}
+  SmartServo(const int MIN, const int MAX):MIN(MIN),MAX(MAX){}
   
-  void init();
-
-  void goHome(){ servo.write(HOME); }
-  void setSpeed(float speed){ this->speed = speed; }
-  float getSpeed()const{ return speed; }
+  void attach(const int PIN){ servo.attach(PIN); }
+  bool inRange(const int angle){
+    return (angle>=MIN and angle<=MAX);
+  } 
+  void write(const int angle){
+    if(inRange(angle)) servo.write(angle);
+  }
+  const int read()const{
+    return servo.read();
+  }
   
-  float getPos()const{ return pos; }
-  bool atLimit()const{ return pos<MIN+1 or pos>MAX-1; }
-  
-  void update();
-    
 private:
   Servo servo;
-  const int PIN;
-  float speed; //Radians per second
-  float pos;
-  
-  const int HOME;
   const int MIN;
   const int MAX;
-  
-  long prevMillis;
 
 };
+
 
 class ServoControl{
 
 public:
 
-  ServoControl(const int SERVO_PIN_1, const int SERVO_PIN_2, const int SERVO_PIN_3, const int SERVO_PIN_4):
-    servo1(SERVO_PIN_1, 87, 0, 120), servo2(SERVO_PIN_2, 60, 10, 90),
-    servo3(SERVO_PIN_3, 90, 50, 180), servo4(SERVO_PIN_4, 30, 10, 180){}
+  ServoControl();
 
-  void init();
-  void update();
+  void attach(const int ARM_1_PIN, const int ARM_2_PIN, const int ARM_3_PIN, const int HAND_PIN);
+  bool update();
+  void setVelocity(float xDot, float yDot, float zDot);
 
-  SmartServo servo1;
-  SmartServo servo2;
-  SmartServo servo3;
-  SmartServo servo4;
+  void printAngles();
+  void printPosition();
   
+private:
+
+  bool writeServos();
+  
+  Vector3f theta; //Arm angles
+  Vector3f thetaDot; //Arm angle velocities
+  Vector3f r; //Cartesian position
+  Vector3f rDot; //Cartesian velocity
+
+  float handAngle;
+  float handAngleDot;
+  
+  long prevMillis;
+  
+  SmartServo arm1;
+  SmartServo arm2;
+  SmartServo arm3;
+  SmartServo hand;
+
 };
 
 #endif

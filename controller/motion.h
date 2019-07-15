@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-const int SMOOTH_LENGTH = 3;
+const int SMOOTH_LENGTH = 6;
 
 class Motion{
 

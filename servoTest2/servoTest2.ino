@@ -54,7 +54,7 @@ Vector3f getThetaVector(float x, float y, float z){
   return Vector3f(radians(x), radians(y), radians(z));  
 }
 void writeServos(Vector3f theta){
-  int angle1 = degrees(theta.x);
+  int angle1 = degrees(theta.x)-3;
   if(angle1<0)angle1=0;
   if(angle1>120)angle1=120;
 
@@ -158,7 +158,7 @@ Vector3f getThetaDot(Vector3f theta, float xDot, float yDot, float zDot){
   //Calculate thetaDot elements
   float thetaDot1 = (b11*xDot + b12*yDot + b13*zDot)/detA;
   float thetaDot2 = (b21*xDot + b22*yDot + b23*zDot)/detA;
-  float thetaDot3 = (b31*xDot + b32*zDot + b33*zDot)/detA;
+  float thetaDot3 = (b31*xDot + b32*yDot + b33*zDot)/detA;
 
   return Vector3f(thetaDot1, thetaDot2, thetaDot3);
 }
@@ -175,7 +175,7 @@ void setup() {
 }
 
 void test1(){
-  theta = getThetaVector(87, 60-10, 90+20);
+  theta = getThetaVector(87+3, 60-10, 90+20);
   writeServos(theta);
   printCartesian(theta);
   Serial.println(getR(theta));
@@ -213,7 +213,7 @@ void test1(){
 
 void test2(){
 
-  theta = getThetaVector(87, 60-10, 90+20);
+  theta = getThetaVector(87+3, 60-10, 90+20);
   writeServos(theta);
   printCartesian(theta);
   
