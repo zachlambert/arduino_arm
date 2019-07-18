@@ -23,6 +23,18 @@ void Motion::updateAcceleration(int16_t ax, int16_t ay, int16_t az){
   updateArray(az, azs, SMOOTH_LENGTH);
 }
 
+void Motion::updateRoll(int16_t rawRoll){
+  const int zeroPos = 90;
+  //Relative angle is from -180 to 180
+  int relativeAngle = (rawRoll-zeroPos);
+  
+  if(relativeAngle>180){
+    relativeAngle-=360;  
+  }
+
+  roll = relativeAngle;
+}
+
 void Motion::updateVelocity(){
   long currentMillis = millis();
   long elapsedMillis = currentMillis - prevMillis;

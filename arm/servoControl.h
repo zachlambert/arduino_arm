@@ -38,6 +38,7 @@ public:
   void attach(const int ARM_1_PIN, const int ARM_2_PIN, const int ARM_3_PIN, const int HAND_PIN);
   bool update();
   void setVelocity(float xDot, float yDot, float zDot);
+  void setHandVelocity(float velocity){ handAngleDot = velocity; }
 
   void printAngles();
   void printPosition();

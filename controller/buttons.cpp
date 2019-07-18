@@ -2,37 +2,32 @@
 #include "buttons.h"
 #include <Arduino.h>
 
+void Button::init(){
+  pinMode(pin, INPUT_PULLUP);  
+}
+void Button::update(){
+  prev = value;
+  value = digitalRead(pin);
+}
+bool Button::isDown()const{
+  return value==0; //Active low  
+}
+bool Button::justDown()const{
+  return value==0 and prev==1;  
+}
+
 void Buttons::init(){
-  pinMode(movePin, INPUT_PULLUP);
-  pinMode(closePin, INPUT_PULLUP);
-  pinMode(openPin, INPUT_PULLUP);  
+  buttonA.init();
+  buttonB.init();
+  buttonC.init();
+  buttonD.init();
+  buttonE.init(); 
 }
 
 void Buttons::update(){
-  movePrev = moveValue;
-  moveValue = digitalRead(movePin);
-  closeValue = digitalRead(closePin);
-  openValue = digitalRead(openPin);
-}
-  
-bool Buttons::moveButtonDown(){
-  return moveValue==0;
-}
-bool Buttons::moveButtonUp(){
-  return moveValue==1;
-}
-bool Buttons::moveButtonJustDown(){
-  return moveValue==0 and movePrev==1;
-}
-bool Buttons::closeButtonDown(){
-  return closeValue==0;
-}
-bool Buttons::closeButtonUp(){
-  return closeValue==1;
-}
-bool Buttons::openButtonDown(){
-  return openValue==0;
-}
-bool Buttons::openButtonUp(){
-  return openValue==1;
+  buttonA.update();
+  buttonB.update();
+  buttonC.update();
+  buttonD.update();
+  buttonE.update(); 
 }

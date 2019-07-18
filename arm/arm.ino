@@ -28,6 +28,7 @@ void loop(){
   if (comms.available()){
     int16_t data[5] = {0,0,0,0,0};
     comms.readInts(data, 5);
+    /*
     Serial.print(data[0]);
     Serial.print(" | ");
     Serial.print(data[1]);
@@ -38,11 +39,13 @@ void loop(){
     Serial.print(" | ");
     Serial.print(data[4]);
     Serial.println("");
-
+*/
     float vx = data[0]/20.0;
     float vy = data[1]/20.0;
     float vz = data[2]/20.0;
     servoControl.setVelocity(vx,vy,vz);
+
+    servoControl.setHandVelocity(data[3]*2.0);
   }
   
 

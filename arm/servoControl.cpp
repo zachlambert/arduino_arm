@@ -66,7 +66,8 @@ bool ServoControl::update(){
   //Update hand angle
 
   handAngle += handAngleDot*seconds;
-
+  Serial.println(handAngle);
+  
   //Write to the servos
   
   if(not writeServos()){
