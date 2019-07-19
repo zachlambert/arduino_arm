@@ -26,26 +26,46 @@ void loop(){
   //Read the data if available in buffer
   
   if (comms.available()){
-    int16_t data[5] = {0,0,0,0,0};
-    comms.readInts(data, 5);
-    /*
-    Serial.print(data[0]);
-    Serial.print(" | ");
-    Serial.print(data[1]);
-    Serial.print(" | ");
-    Serial.print(data[2]);
-    Serial.print(" | ");
-    Serial.print(data[3]);
-    Serial.print(" | ");
-    Serial.print(data[4]);
-    Serial.println("");
-*/
-    float vx = data[0]/20.0;
-    float vy = data[1]/20.0;
-    float vz = data[2]/20.0;
-    servoControl.setVelocity(vx,vy,vz);
+    int16_t data[2] = {0,0};
+    comms.readInts(data, 2);
 
-    servoControl.setHandVelocity(data[3]*2.0);
+    int isV1 = data[1]>>0 & 0x1;
+    int isV2 = data[1]>>1 & 0x1;
+    int isV3 = data[1]>>2 & 0x1;
+    int isVHand = data[1]>>3 & 0x1;
+    int coordSystemSelect = data[1]>>4 & 0x1;
+
+    float v1 = 0;
+    float v2 = 0;
+    float v3 = 0;
+    float vHand = 0;
+    
+    if(isV1){
+      v1 = data[0] / 250;    
+    }else if(isV2){
+      v2 = data[0] / 250;  
+    }else if(isV3){
+      v3 = data[0] / 250;  
+    }else if(isVHand){
+      vHand = data[0] / 25;  
+    }
+
+    Serial.print(v1);
+    Serial.print(" | ");
+    Serial.print(v2);
+    Serial.print(" | ");
+    Serial.print(v3);
+    Serial.print(" | ");
+    Serial.print(vHand);
+    Serial.println("");
+
+    if(coordSystemSelect==1){
+      servoControl.setCartesianVelocity(v1,v2,v3);
+    }else{
+      servoControl.setPolarVelocity(v1,v2,v3);  
+    }
+    
+    servoControl.setHandVelocity(vHand);
   }
   
 

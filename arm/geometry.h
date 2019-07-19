@@ -35,7 +35,8 @@ Vector3f getCartesian(Vector3f theta);
 float getRDot(Vector3f theta, Vector3f thetaDot);
 float getZDot(Vector3f theta, Vector3f thetaDot);
 
-Vector3f getThetaDot(const Vector3f& theta, const Vector3f& rDot);
+Vector3f getThetaDotForCartesian(const Vector3f& theta, const Vector3f& rDot);
+Vector3f getThetaDotForPolar(const Vector3f& theta, const Vector3f& rDot);
 
 Vector3f vectorToRadians(const Vector3f& v);
 Vector3f vectorToDegrees(const Vector3f& v);

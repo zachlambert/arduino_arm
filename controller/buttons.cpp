@@ -31,3 +31,15 @@ void Buttons::update(){
   buttonD.update();
   buttonE.update(); 
 }
+
+int16_t Buttons::getStatus()const{
+
+  int16_t status = 0;
+  status|=buttonA.isDown();
+  status|=buttonB.isDown()<<1;
+  status|=buttonC.isDown()<<2;
+  status|=buttonD.isDown()<<3;
+  status|=buttonE.isDown()<<4;
+
+  return status;
+}

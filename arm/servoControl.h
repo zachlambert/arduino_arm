@@ -36,8 +36,10 @@ public:
   ServoControl();
 
   void attach(const int ARM_1_PIN, const int ARM_2_PIN, const int ARM_3_PIN, const int HAND_PIN);
-  bool update();
-  void setVelocity(float xDot, float yDot, float zDot);
+  void update();
+  
+  void setCartesianVelocity(float xDot, float yDot, float zDot);
+  void setPolarVelocity(float rScalarDot, float thetaDot, float zDot);
   void setHandVelocity(float velocity){ handAngleDot = velocity; }
 
   void printAngles();
@@ -45,8 +47,9 @@ public:
   
 private:
 
-  bool writeServos();
-  
+  bool writeMotionServos(const Vector3f& theta);
+  bool writeHandServo(const float angle);
+
   Vector3f theta; //Arm angles
   Vector3f thetaDot; //Arm angle velocities
   Vector3f r; //Cartesian position

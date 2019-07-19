@@ -35,7 +35,8 @@ ServoControl::ServoControl():
   theta = HOME_THETA;
   handAngle = HAND_HOME;
   
-  writeServos();
+  writeMotionServos(theta);
+  writeHandServo(handAngle);
 }
 
 void ServoControl::attach(const int ARM_1_PIN, const int ARM_2_PIN, const int ARM_3_PIN, const int HAND_PIN){
@@ -47,7 +48,7 @@ void ServoControl::attach(const int ARM_1_PIN, const int ARM_2_PIN, const int AR
   prevMillis = millis();
 }
 
-bool ServoControl::update(){
+void ServoControl::update(){
   
   //Calculate elapsed time
   
@@ -57,30 +58,35 @@ bool ServoControl::update(){
   
   float seconds = ((float)elapsedMillis) / 1000.0;
 
-  //Update theta
-  
-  thetaDot = getThetaDot(theta, rDot);
-  Vector3f deltaTheta = thetaDot*seconds;
-  theta += deltaTheta;
+  //Update hand servo
 
-  //Update hand angle
-
-  handAngle += handAngleDot*seconds;
-  Serial.println(handAngle);
+  float newHandAngle = handAngle + handAngleDot*seconds;
   
-  //Write to the servos
-  
-  if(not writeServos()){
-    //setVelocity(0,0,0);
-    return false;
+  if(writeHandServo(newHandAngle)){
+    handAngle = newHandAngle;
   }
-  return true;
+
+  //Update motion servos
+  
+  Vector3f newTheta = theta + thetaDot*seconds;
+  
+  if(writeMotionServos(newTheta)){
+    theta = newTheta;
+  }
 }
 
-void ServoControl::setVelocity(float xDot, float yDot, float zDot){
+void ServoControl::setCartesianVelocity(float xDot, float yDot, float zDot){
   rDot.x = xDot;
   rDot.y = yDot;
   rDot.z = zDot;
+  thetaDot = getThetaDotForCartesian(theta, rDot);
+}
+
+void ServoControl::setPolarVelocity(float rScalarDot, float thetaScalarDot, float zDot){
+  rDot.x = rScalarDot;
+  rDot.y = thetaScalarDot;
+  rDot.z = zDot;
+  thetaDot = getThetaDotForPolar(theta, rDot);
 }
 
 void ServoControl::printAngles(){
@@ -90,11 +96,7 @@ void ServoControl::printAngles(){
 void ServoControl::printPosition(){
   printVector(getCartesian(theta));  
 }
-bool ServoControl::writeServos(){
-  
-  //Hand is written to, even if the movement servos are invalid
-  
-  hand.write(handAngle);
+bool ServoControl::writeMotionServos(const Vector3f& theta){
 
   //The arm servos are only written to if all movement is valid (within range)
   
@@ -111,4 +113,14 @@ bool ServoControl::writeServos(){
   arm3.write(servoAngle3);
 
   return true;
+}
+bool ServoControl::writeHandServo(const float angle){
+
+  if(hand.inRange(angle)){
+    hand.write(angle);  
+    return true;
+  }else{
+    return false;  
+  }
+  
 }

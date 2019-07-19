@@ -29,12 +29,7 @@ public:
 
   void init();
   void update();
-
-  Button& getButtonA(){ return buttonA; }
-  Button& getButtonB(){ return buttonB; }
-  Button& getButtonC(){ return buttonC; }
-  Button& getButtonD(){ return buttonD; }
-  Button& getButtonE(){ return buttonE; }
+  int getStatus()const;
   
 private:
   

@@ -52,7 +52,7 @@ float getZDot(Vector3f theta, Vector3f thetaDot){
 
 //Function for calculating the necessary thetaDot for a given rDot
 
-Vector3f getThetaDot(const Vector3f& theta, const Vector3f& rDot){
+Vector3f getThetaDotForCartesian(const Vector3f& theta, const Vector3f& rDot){
   float r = getR(theta);
   
   //xDot = A11*thetaDot1 + A12*thetaDot2 + A13*thetaDot3
@@ -64,6 +64,46 @@ Vector3f getThetaDot(const Vector3f& theta, const Vector3f& rDot){
   float A21 = cos(theta.x)*r;
   float A22 = a*sin(theta.x)*cos(theta.y);
   float A23 = b*sin(theta.x)*sin(theta.z);
+
+  //zDot = A31*thetaDot1 + A32*thetaDot2 + A33*thetaDot3
+  float A31 = 0;
+  float A32 = -a*sin(theta.y);
+  float A33 = -b*cos(theta.z);
+
+  float detA = A11*(A22*A33 - A32*A23) - A12*(A21*A33 - A31*A23) + A13*(A21*A32 - A31*A22);  
+
+  //B = inverse of A, without dividing by the determinant
+  //Dividing by determinant later
+  float b11 = +(A22*A33 - A32*A23);
+  float b12 = -(A12*A33 - A32*A13);
+  float b13 = +(A12*A23 - A22*A13);
+  float b21 = -(A21*A33 - A31*A23);
+  float b22 = +(A11*A33 - A31*A13);
+  float b23 = -(A11*A23 - A21*A13);
+  float b31 = +(A21*A32 - A31*A22);
+  float b32 = -(A11*A32 - A31*A12);
+  float b33 = +(A11*A22 - A21*A12);
+
+  //Calculate thetaDot elements
+  float thetaDot1 = (b11*rDot.x + b12*rDot.y + b13*rDot.z)/detA;
+  float thetaDot2 = (b21*rDot.x + b22*rDot.y + b23*rDot.z)/detA;
+  float thetaDot3 = (b31*rDot.x + b32*rDot.y + b33*rDot.z)/detA;
+
+  return Vector3f(thetaDot1, thetaDot2, thetaDot3);
+}
+
+Vector3f getThetaDotForPolar(const Vector3f& theta, const Vector3f& rDot){
+  float r = getR(theta);
+  
+  //rDot = A11*thetaDot1 + A12*thetaDot2 + A13*thetaDot3
+  float A11 = 0;
+  float A12 = a*cos(theta.y);
+  float A13 = b*sin(theta.z);
+  
+  //thetaDot = A21*thetaDot1 + A22*thetaDot2 + A23*thetaDot3
+  float A21 = r;
+  float A22 = 0;
+  float A23 = 0;
 
   //zDot = A31*thetaDot1 + A32*thetaDot2 + A33*thetaDot3
   float A31 = 0;

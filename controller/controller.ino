@@ -7,7 +7,6 @@
 
 #include "comms.h"
 #include "mpuData.h"
-#include "motion.h"
 #include "buttons.h"
 
 //MPU
@@ -20,10 +19,6 @@ volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin h
 void dmpDataReady() {
     mpuInterrupt = true;
 }
-
-//Motion tracking
-
-Motion motion;
 
 //Communication
 
@@ -108,15 +103,10 @@ void update_mpu(){
 
       //Extract relevant information
 
-      // display real acceleration, adjusted to remove gravity
       mpu.dmpGetQuaternion(&mpuData.q, mpuData.fifoBuffer);
-      mpu.dmpGetAccel(&mpuData.aa, mpuData.fifoBuffer);
       mpu.dmpGetGravity(&mpuData.gravity, &mpuData.q);
       mpu.dmpGetYawPitchRoll(mpuData.ypr, &mpuData.q, &mpuData.gravity);
-      mpu.dmpGetLinearAccel(&mpuData.aaReal, &mpuData.aa, &mpuData.gravity);
 
-
-      
   }  
 }
 
@@ -136,54 +126,46 @@ void loop() {
 
   update_mpu();
 
-  //Update buttons
+  //Update buttons and get status
+  
   buttons.update();
+  int16_t status = buttons.getStatus();
     
-  //Update motion tracking
-  
-  motion.updateAcceleration(mpuData.aaReal.x,mpuData.aaReal.y,mpuData.aaReal.z);
-  motion.updateRoll(degrees(mpuData.ypr[2]));
-  
-  if(buttons.getButtonA().justDown()){
-    motion.resetVelocityX();
-    Serial.println("RESETTING VX");
+  //Extract roll, convert to a relative value
+
+  int16_t rawRoll = degrees(mpuData.ypr[2]);
+  const int16_t rollOffset = 90;
+  int16_t roll = rawRoll - rollOffset;
+  if(roll>180){
+    roll-=360;  
   }
-  if(buttons.getButtonB().justDown()){
-    motion.resetVelocityY();
-    Serial.println("RESETTING VY");
+  if(roll<-180){
+    roll+=360;  
   }
-  if(buttons.getButtonC().justDown()){
-    motion.resetVelocityZ();
-    Serial.println("RESETTING VZ");
-  }
-  motion.updateVelocity();
+
+  //Measure sensitivity
+
+  //int potValue = analogRead(0); TODO
+  int potValue = 500;
+  int sensitivity = map(potValue,0,1024,0,100);
+
+  //Calculate velocity
+
+  //(Magnitude should be large to increase resolution, arm will divide the value)
+  //Velocity is in the range [-18,000,18,000]
+  int16_t velocity = roll * sensitivity;
   
   //Write to radio
   
-  int16_t data[5] = {0, 0, 0, 0, 0};
+  int16_t data[2] = {0, 0};
 
-  if(buttons.getButtonA().isDown()){
-    data[0] = motion.getVelocityX();
-  }
-  if(buttons.getButtonB().isDown()){
-    data[1] = motion.getVelocityY();
-  }
-  if(buttons.getButtonC().isDown()){
-    data[2] = motion.getVelocityZ();
-  }
-  if(buttons.getButtonD().isDown()){
-    data[3] = motion.getRoll();
-  } 
-  data[4] = (not buttons.getButtonE().getValue());
+  data[0] = velocity;
+  data[1] = status;
 
-  Serial.print(motion.getVelocityX());
+  Serial.print(data[0]);
   Serial.print(" | ");
-  Serial.print(motion.getVelocityY());
-  Serial.print(" | ");
-  Serial.print(motion.getVelocityZ());
-  Serial.print(" | ");
-  Serial.print(motion.getRoll());
+  Serial.print(data[1], BIN);
   Serial.println("");
   
-  comms.sendInts(data, 5);
+  comms.sendInts(data, 2);
 }
