@@ -42,12 +42,12 @@ void setup_mpu(){
 
     mpuData.devStatus = mpu.dmpInitialize();
 
-    mpu.setXGyroOffset(111);
-    mpu.setYGyroOffset(-74);
-    mpu.setZGyroOffset(-74);
-    mpu.setXAccelOffset(7267);
-    mpu.setYAccelOffset(-5873);
-    mpu.setZAccelOffset(9213);
+    mpu.setXGyroOffset(0);
+    mpu.setYGyroOffset(-119);
+    mpu.setZGyroOffset(120);
+    mpu.setXAccelOffset(-7559);
+    mpu.setYAccelOffset(-6183);
+    mpu.setZAccelOffset(9285);
 
     if (mpuData.devStatus == 0) {
         mpu.setDMPEnabled(true);
@@ -133,8 +133,8 @@ void loop() {
     
   //Extract roll, convert to a relative value
 
-  int16_t rawRoll = degrees(mpuData.ypr[2]);
-  const int16_t rollOffset = 90;
+  int16_t rawRoll = degrees(mpuData.ypr[1]);
+  const int16_t rollOffset = -90;
   int16_t roll = rawRoll - rollOffset;
   if(roll>180){
     roll-=360;  
@@ -145,8 +145,7 @@ void loop() {
 
   //Measure sensitivity
 
-  //int potValue = analogRead(0); TODO
-  int potValue = 500;
+  int potValue = analogRead(0);
   int sensitivity = map(potValue,0,1024,0,100);
 
   //Calculate velocity
